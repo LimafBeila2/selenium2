@@ -156,8 +156,9 @@ def process_product(product):
             
             try:
                 # Проверяем, есть ли поле скидочной цены
-                logging.info("Ищем поле скидочной цены...")
-                discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")
+                discount_input = WebDriverWait(driver, 60).until(
+                    EC.presence_of_all_elements_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                )
 
                 if discount_input:
                     discount_input = discount_input[0]  # Берем первый найденный элемент
@@ -167,14 +168,14 @@ def process_product(product):
                 else:
                     # Если скидочного поля нет, ищем обычное поле цены
                     logging.info("Поле скидочной цены не найдено. Ищем стандартное поле цены.")
-                    price_input = WebDriverWait(driver, 10).until(
+                    price_input = WebDriverWait(driver, 60).until(
                         EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Цена' or @placeholder='Qiymət']"))
                         )
                     price_input.clear()
                     price_input.send_keys(str(round(lowest_price - 0.01, 2)))
                     logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                    save_button = WebDriverWait(driver, 30).until(
+                    save_button = WebDriverWait(driver, 60).until(
                         EC.element_to_be_clickable((By.CSS_SELECTOR, "button.tw-bg-umico-brand-main-brand"))
                     )
                     sleep(2)
