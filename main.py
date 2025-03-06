@@ -158,7 +158,7 @@ def process_product(q):
                 
                 try:
                     # Проверяем, есть ли поле для скидки
-                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Endirimli qiymət']")
+                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Скидочная цена' or //input[@placeholder='Endirimli qiymət']")
                     
                     if discount_input:
                         # Если поле для скидки есть, вводим цену туда
@@ -167,7 +167,7 @@ def process_product(q):
                         logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
                     else:
                         # Если нет, вводим цену в поле "Qiymət"
-                        price_input = driver.find_elements(By.XPATH, "//input[@placeholder='Qiymət']")
+                        price_input = driver.find_elements(By.XPATH, "'//input[@placeholder='Цена]' or //input[@placeholder='Qiymət']")
                         if price_input:
                             price_input[0].clear()
                             price_input[0].send_keys(str(round(lowest_price - 0.01, 2)))
