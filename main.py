@@ -32,7 +32,6 @@ def create_driver():
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
 
-
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
@@ -211,8 +210,12 @@ def process_products_from_json(json_file):
     for thread in threads:
         thread.join()
 
+
+
+
 if __name__ == "__main__":
     while True:
         process_products_from_json("product.json")
         logging.info("Работа завершена! Перезапуск через 1 секунду...")
         sleep(1)
+
