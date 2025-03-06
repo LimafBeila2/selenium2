@@ -156,17 +156,17 @@ def process_product(q):
                 driver.get(edit_url)
     
                 # Проверка, если мы на странице логина (https://business.umico.az/sign-in)
-            if "sign-in" in driver.current_url:
-                logging.info("Необходим вход. Авторизация...")
-                login_to_umico(driver)  # вызываем функцию для входа
+            # if "sign-in" in driver.current_url:
+            #     logging.info("Необходим вход. Авторизация...")
+            #     login_to_umico(driver)  # вызываем функцию для входа
 
-                # Ждем некоторое время, чтобы страница успела загрузиться после входа
-                sleep(5)
-                driver.get(edit_url)
+            #     # Ждем некоторое время, чтобы страница успела загрузиться после входа
+            #     sleep(5)
+            #     driver.get(edit_url)
                 
                 try:
                     discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
+                        EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'tw-border-umico-brand-main-brand')]"))
                     )
 
                     if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
