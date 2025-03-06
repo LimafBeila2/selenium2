@@ -70,18 +70,8 @@ def close_ad(driver):
         )
         baku_option.click()
         logging.info("Город Баку выбран.")
-    except Exception as e:
-        logging.info(f"Окно выбора города не появилось. Ошибка: {e}")
-    
-    try:
-        # Пробуем закрыть рекламу (если это требуется)
-        close_ad_button = WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Закрыть')]"))
-        )
-        close_ad_button.click()
-        logging.info("Реклама закрыта.")
-    except Exception as e:
-        logging.info(f"Реклама не была найдена или не закрыта. Ошибка: {e}")
+    except:
+        logging.info("Окно выбора города не появилось.")
 
 # Функция обработки одного товара
 def process_product(q):
