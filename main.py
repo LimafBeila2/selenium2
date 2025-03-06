@@ -1,6 +1,5 @@
 import json
 import threading
-import queue
 import os
 import logging
 from time import sleep
@@ -190,26 +189,12 @@ def process_product(product):
     finally:
         driver.quit()
 
-# Функция для запуска потоков
+# Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    q = queue.Queue()
 
     for product in products:
-        q.put(product)
-
-    threads = []
-    num_threads = min(1, len(products))  # Запускаем не больше 10 потоков
-
-    for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(q,))
-        threads.append(thread)
-        thread.start()
-
-    q.join()
-
-    for thread in threads:
-        thread.join()
+        process_product(product)
 
 if __name__ == "__main__":
     while True:
