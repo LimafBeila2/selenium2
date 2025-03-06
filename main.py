@@ -199,7 +199,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(3, len(products))  # Запускаем не больше 3 потоков
+    num_threads = min(1, len(products))  # Запускаем не больше 3 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
