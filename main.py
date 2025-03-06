@@ -162,6 +162,7 @@ def process_product(q):
 
                 # Ждем некоторое время, чтобы страница успела загрузиться после входа
                 sleep(5)
+                driver.get(edit_url)
                 
                 try:
                     discount_checkbox = WebDriverWait(driver, 10).until(
