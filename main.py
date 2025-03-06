@@ -156,40 +156,44 @@ def process_product(product):
             
             try:
                 # Проверяем, есть ли поле скидочной цены
+                logging.info("Ищем поле скидочной цены...")
                 discount_input = WebDriverWait(driver, 60).until(
-                    EC.presence_of_all_elements_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
+                EC.presence_of_all_elements_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
                 )
 
                 if discount_input:
-                    discount_input = discount_input[0]  # Берем первый найденный элемент
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-                else:
-                    # Если скидочного поля нет, ищем обычное поле цены
-                    logging.info("Поле скидочной цены не найдено. Ищем стандартное поле цены.")
-                    price_input = WebDriverWait(driver, 60).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Цена' or @placeholder='Qiymət']"))
-                        )
-                    price_input.clear()
-                    price_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
+                discount_input = discount_input[0]  # Берем первый найденный элемент
+                discount_input.click()  # Активируем поле
+                discount_input.clear()
+                discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+            else:
+                # Если скидочного поля нет, ищем обычное поле цены
+                logging.info("Поле скидочной цены не найдено. Ищем стандартное поле цены.")
+                price_input = WebDriverWait(driver, 60).until(
+                    EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Цена' or @placeholder='Qiymət']"))
+                )
+                price_input.click()  # Активируем поле
+                price_input.clear()
+                price_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                    save_button = WebDriverWait(driver, 60).until(
-                        EC.element_to_be_clickable((By.CSS_SELECTOR, "button.tw-bg-umico-brand-main-brand"))
-                    )
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(10)
-            except Exception as e:
-                logging.error(f"Ошибка при установке скидочной цены: {e}")
-                
+                save_button = WebDriverWait(driver, 60).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "button.tw-bg-umico-brand-main-brand"))
+                )
+                sleep(2)
+                save_button.click()
+                logging.info("Цена обновлена!")
+                sleep(10)
+        
     except Exception as e:
-        logging.exception(f"Ошибка при обработке товара: {e}")
+        logging.error(f"Ошибка при установке скидочной цены: {e}")
+        logging.error(f"Текст ошибки: {str(e)}")
+        logging.error("Проверьте элементы на странице, возможно, они не загружены или были изменены.")
+    
     finally:
         driver.quit()
-
+        
 # Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
