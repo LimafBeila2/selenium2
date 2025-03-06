@@ -157,8 +157,8 @@ def process_product(q):
                 sleep(5)
                 
                 try:
-                    # Проверяем, есть ли поле для скидки
-                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Скидочная цена' or //input[@placeholder='Endirimli qiymət']")
+                    # Исправленный XPath для скидочной цены
+                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")
                     
                     if discount_input:
                         # Если поле для скидки есть, вводим цену туда
@@ -166,8 +166,8 @@ def process_product(q):
                         discount_input[0].send_keys(str(round(lowest_price - 0.01, 2)))
                         logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
                     else:
-                        # Если нет, вводим цену в поле "Qiymət"
-                        price_input = driver.find_elements(By.XPATH, "'//input[@placeholder='Цена]' or //input[@placeholder='Qiymət']")
+                        # Исправленный XPath для обычной цены
+                        price_input = driver.find_elements(By.XPATH, "//input[@placeholder='Цена' or @placeholder='Qiymət']")
                         if price_input:
                             price_input[0].clear()
                             price_input[0].send_keys(str(round(lowest_price - 0.01, 2)))
@@ -199,7 +199,7 @@ def process_products_from_json(json_file):
         q.put(product)
 
     threads = []
-    num_threads = min(3, len(products))  # Запускаем не больше 10 потоков
+    num_threads = min(3, len(products))  # Запускаем не больше 3 потоков
 
     for _ in range(num_threads):
         thread = threading.Thread(target=process_product, args=(q,))
@@ -212,11 +212,8 @@ def process_products_from_json(json_file):
         thread.join()
 
 
-
-
 if __name__ == "__main__":
     while True:
         process_products_from_json("product.json")
         logging.info("Работа завершена! Перезапуск через 1 секунду...")
         sleep(1)
-
