@@ -1,3 +1,4 @@
+
 import json
 import threading
 import queue
@@ -17,13 +18,15 @@ from selenium.webdriver.support import expected_conditions as EC
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")  # Путь к бинарному файлу Chrome
-chrome_options.add_argument("--headless")  # Без графического интерфейса
-chrome_options.add_argument("disable-dev-shm-usage")  # Отключение использования /dev/shm
-chrome_options.add_argument("--no-sandbox")  # Отключение песочницы (можно использовать в некоторых окружениях)
-driver = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), options=chrome_options)
-
+# Функция для создания драйвера
+def create_driver():
+    options = Options()
+    options.binary_location = "/usr/bin/chromium"
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    service = Service("/usr/bin/chromedriver")
+    return webdriver.Chrome(service=service, options=options)
 
 # Функция загрузки JSON
 def load_json(json_file):
