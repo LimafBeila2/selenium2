@@ -150,7 +150,7 @@ def process_product(product):
                 logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
                 save_button = WebDriverWait(driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Готово'] or .//span[text()='Hazır']]"))
-                )
+            )
                 sleep(2)
                 save_button.click()
                 logging.info("Цена обновлена!")
