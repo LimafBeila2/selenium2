@@ -157,28 +157,28 @@ def process_product(q):
                 sleep(5)
                 
                 try:
-                    discount_checkbox = WebDriverWait(driver, 60).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"))
-                    )
-
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 60).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-
+                    # Проверяем, есть ли поле для скидки
+                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Endirimli qiymət']")
+                    
+                    if discount_input:
+                        # Если поле для скидки есть, вводим цену туда
+                        discount_input[0].clear()
+                        discount_input[0].send_keys(str(round(lowest_price - 0.01, 2)))
+                        logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+                    else:
+                        # Если нет, вводим цену в поле "Qiymət"
+                        price_input = driver.find_elements(By.XPATH, "//input[@placeholder='Qiymət']")
+                        if price_input:
+                            price_input[0].clear()
+                            price_input[0].send_keys(str(round(lowest_price - 0.01, 2)))
+                            logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
+                        
                     save_button = WebDriverWait(driver, 60).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
                     )
                     sleep(2)
                     save_button.click()
-                    logging.info("Цена обновлена!")
+                    logging.info("Цена обновлена! Обработка завершена.")
                     sleep(10)
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
@@ -188,6 +188,7 @@ def process_product(q):
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
         driver.quit()
+
 
 # Функция для запуска потоков
 def process_products_from_json(json_file):
