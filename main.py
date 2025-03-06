@@ -32,6 +32,17 @@ def create_driver():
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
 
+# # Функция для создания драйвера
+# def create_driver():
+#     options = webdriver.ChromeOptions()
+#     options.add_argument("--headless")  # если не хотите видеть браузер
+#     # Указываем путь к ChromeDriver
+#     service = Service(ChromeDriverManager().install())  # Это автоматически установит ChromeDriver
+
+#     driver = webdriver.Chrome(service=service, options=options)
+#     return driver
+
+
 # Функция входа в Umico Business
 def login_to_umico(driver):
     load_dotenv()
@@ -60,17 +71,17 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
-# Функция закрытия рекламы / выбора города
-def close_ad(driver):
-    try:
-        # Здесь добавляется возможность выбора города "Баку"
-        baku_option = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
-        )
-        baku_option.click()
-        logging.info("Город Баку выбран.")
-    except:
-        logging.info("Окно выбора города не появилось.")
+# # Функция закрытия рекламы / выбора города
+# def close_ad(driver):
+#     try:
+#         # Здесь добавляется возможность выбора города "Баку"
+#         baku_option = WebDriverWait(driver, 30).until(
+#             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
+#         )
+#         baku_option.click()
+#         logging.info("Город Баку выбран.")
+#     except:
+#         logging.info("Окно выбора города не появилось.")
 
 # Функция обработки одного товара
 def process_product(q):
@@ -84,7 +95,6 @@ def process_product(q):
             logging.info(f"Обрабатываем товар: {product_url}")
             driver.get(product_url)
             sleep(2)
-            close_ad(driver)
             
             try:
                 button = WebDriverWait(driver, 30).until(
