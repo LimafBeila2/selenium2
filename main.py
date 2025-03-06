@@ -60,6 +60,7 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
+
 # Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
