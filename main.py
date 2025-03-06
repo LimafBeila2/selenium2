@@ -60,27 +60,27 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
-# # Функция закрытия рекламы / выбора города
-# def close_ad(driver):
-#     try:
-#         # Здесь добавляется возможность выбора города "Баку"
-#         baku_option = WebDriverWait(driver, 30).until(
-#             EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
-#         )
-#         baku_option.click()
-#         logging.info("Город Баку выбран.")
-#     except Exception as e:
-#         logging.info(f"Окно выбора города не появилось. Ошибка: {e}")
+# Функция закрытия рекламы / выбора города
+def close_ad(driver):
+    try:
+        # Здесь добавляется возможность выбора города "Баку"
+        baku_option = WebDriverWait(driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, "//span[text()='Баку' or text()='Bakı']"))
+        )
+        baku_option.click()
+        logging.info("Город Баку выбран.")
+    except Exception as e:
+        logging.info(f"Окно выбора города не появилось. Ошибка: {e}")
     
-#     try:
-#         # Пробуем закрыть рекламу (если это требуется)
-#         close_ad_button = WebDriverWait(driver, 5).until(
-#             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Закрыть')]"))
-#         )
-#         close_ad_button.click()
-#         logging.info("Реклама закрыта.")
-#     except Exception as e:
-#         logging.info(f"Реклама не была найдена или не закрыта. Ошибка: {e}")
+    try:
+        # Пробуем закрыть рекламу (если это требуется)
+        close_ad_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Закрыть')]"))
+        )
+        close_ad_button.click()
+        logging.info("Реклама закрыта.")
+    except Exception as e:
+        logging.info(f"Реклама не была найдена или не закрыта. Ошибка: {e}")
 
 # Функция обработки одного товара
 def process_product(q):
@@ -94,7 +94,7 @@ def process_product(q):
             logging.info(f"Обрабатываем товар: {product_url}")
             driver.get(product_url)
             sleep(2)
-
+            close_ad(driver)
 
             # Убираем код для просмотра всех предложений
             try:
