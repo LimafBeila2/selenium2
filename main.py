@@ -154,6 +154,13 @@ def process_product(q):
             if super_store_price is not None and lowest_price < super_store_price:
                 logging.info("Меняем цену...")
                 driver.get(edit_url)
+    
+                # Проверка, если мы на странице логина (https://business.umico.az/sign-in)
+            if "sign-in" in driver.current_url:
+                logging.info("Необходим вход. Авторизация...")
+                login_to_umico(driver)  # вызываем функцию для входа
+
+                # Ждем некоторое время, чтобы страница успела загрузиться после входа
                 sleep(5)
                 
                 try:
