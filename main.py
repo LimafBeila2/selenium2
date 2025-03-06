@@ -165,29 +165,32 @@ def process_product(q):
             #     driver.get(edit_url)
                 
                 try:
-                    discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'tw-border-umico-brand-main-brand')]"))
-                    )
+                    # Проверяем, есть ли поле скидочной цены
+                    logging.info("Ищем поле скидочной цены...")
+                    discount_input = driver.find_elements(By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")
+    
+                    if discount_input:
+                        discount_input = discount_input[0]  # Берем первый найденный элемент
+                        discount_input.clear()
+                        discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                        logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
+                    else:
+                        # Если скидочного поля нет, ищем обычное поле цены
+                        logging.info("Поле скидочной цены не найдено. Ищем стандартное поле цены.")
+                        price_input = WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Цена' or @placeholder='Qiymət']"))
+                            )
+                        price_input.clear()
+                        price_input.send_keys(str(round(lowest_price - 0.01, 2)))
+                        logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
 
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"))
-                    )
-
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-                    
-                    save_button = WebDriverWait(driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(10)
+                        save_button = WebDriverWait(driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                        )
+                        sleep(2)
+                        save_button.click()
+                        logging.info("Цена обновлена!")
+                        sleep(10)
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
                     
