@@ -133,6 +133,10 @@ def process_product(q):
                         if not price_text_cleaned:
                             continue
                         
+                        # Обработка точки и запятой
+                        price_text_cleaned = price_text_cleaned.replace(",", ".")  # Заменяем запятую на точку
+
+                    # Преобразуем в число
                     price = float(price_text_cleaned)
                     if merchant == "Super Store":
                         super_store_price = price
@@ -188,6 +192,7 @@ def process_product(q):
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
         driver.quit()
+
 
 
 # Функция для запуска потоков
