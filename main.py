@@ -17,10 +17,19 @@ from selenium.webdriver.support import expected_conditions as EC
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
+chrome_options = webdriver.ChromeOptions()
+chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")  # Путь к бинарному файлу Chrome
+chrome_options.add_argument("--headless")  # Без графического интерфейса
+chrome_options.add_argument("disable-dev-shm-usage")  # Отключение использования /dev/shm
+chrome_options.add_argument("--no-sandbox")  # Отключение песочницы (можно использовать в некоторых окружениях)
+driver = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), options=chrome_options)
+
+
 # Функция загрузки JSON
 def load_json(json_file):
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 # Функция для создания драйвера
 def create_driver():
@@ -31,6 +40,7 @@ def create_driver():
     options.add_argument("--disable-dev-shm-usage")
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=options)
+
 
 # Функция входа в Umico Business
 def login_to_umico(driver):
@@ -60,6 +70,7 @@ def login_to_umico(driver):
         driver.quit()
         raise ValueError("Ошибка входа! Проверь логин и пароль.")
 
+
 # Функция закрытия рекламы / выбора города
 def close_ad(driver):
     try:
@@ -70,6 +81,43 @@ def close_ad(driver):
         logging.info("Город Баку выбран.")
     except:
         logging.info("Окно выбора города не появилось.")
+
+
+# Функция ожидания элемента
+def wait_for_element(driver, xpath, timeout=30):
+    try:
+        return WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.XPATH, xpath))
+        )
+    except Exception as e:
+        logging.error(f"Не удалось найти элемент по XPath {xpath}: {e}")
+        return None
+
+
+# Обновленная функция установки скидки
+def set_discount(driver, discount_price):
+    try:
+        # Ожидаем, что чекбокс будет доступен
+        discount_checkbox = wait_for_element(driver, "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]")
+        if discount_checkbox and not 'tw-border-umico-brand-main-brand' in discount_checkbox.get_attribute('class'):
+            discount_checkbox.click()
+            logging.info("Галочка на скидку поставлена.")
+        else:
+            logging.info("Галочка на скидку уже установлена.")
+
+        discount_input = wait_for_element(driver, "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']")
+        if discount_input:
+            discount_input.clear()
+            discount_input.send_keys(str(round(discount_price, 2)))
+            logging.info(f"Установлена скидочная цена: {round(discount_price, 2)} ₼")
+        
+        save_button = wait_for_element(driver, "//button[span[text()='Готово'] or span[text()='Hazır']]")
+        if save_button:
+            save_button.click()
+            logging.info("Цена обновлена!")
+    except Exception as e:
+        logging.error(f"Ошибка при установке скидочной цены: {e}")
+
 
 # Функция обработки одного товара
 def process_product(q):
@@ -135,51 +183,15 @@ def process_product(q):
                 driver.get(edit_url)
                 sleep(5)
 
-                try:
-                    discount_checkbox = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((
-                            By.XPATH, 
-                            "//div[contains(text(), 'Скидка') or contains(text(), 'Endirim')]//preceding-sibling::div[contains(@class, 'tw-border-')]"
-                        ))
-                    )
+                set_discount(driver, lowest_price - 0.01)
 
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-
-                    discount_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((
-                            By.XPATH, 
-                            "//input[@placeholder='Скидочная цена' or @placeholder='Endirimli qiymət']"
-                        ))
-                    )
-
-                    # Проверяем, не установлен ли уже флаг на скидку
-                    if 'tw-border-umico-brand-main-brand' not in discount_checkbox.get_attribute('class'):
-                        discount_checkbox.click()
-                        logging.info("Галочка на скидку поставлена.")
-                    else:
-                        logging.info("Галочка на скидку уже установлена.")
-                    
-                    discount_input.clear()
-                    discount_input.send_keys(str(round(lowest_price - 0.01, 2)))
-                    logging.info(f"Установлена скидочная цена: {round(lowest_price - 0.01, 2)} ₼")
-
-                    save_button = WebDriverWait(driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
-                    )
-                    sleep(2)
-                    save_button.click()
-                    logging.info("Цена обновлена!")
-                    sleep(10)
-                except Exception as e:
-                    logging.error(f"Ошибка при установке скидочной цены: {e}")
-
+                sleep(10)
             q.task_done()
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
         driver.quit()
+
 
 # Функция для запуска потоков
 def process_products_from_json(json_file):
@@ -201,6 +213,7 @@ def process_products_from_json(json_file):
 
     for thread in threads:
         thread.join()
+
 
 if __name__ == "__main__":
     process_products_from_json("product.json")
