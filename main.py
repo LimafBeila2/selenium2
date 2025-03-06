@@ -185,7 +185,7 @@ def process_product(q):
                         logging.info(f"Установлена цена: {round(lowest_price - 0.01, 2)} ₼")
 
                         save_button = WebDriverWait(driver, 30).until(
-                            EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Готово'] or span[text()='Hazır']]"))
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.tw-bg-umico-brand-main-brand"))
                         )
                         sleep(2)
                         save_button.click()
@@ -194,7 +194,7 @@ def process_product(q):
                 except Exception as e:
                     logging.error(f"Ошибка при установке скидочной цены: {e}")
                     
-            q.task_done()
+                    q.task_done()
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
