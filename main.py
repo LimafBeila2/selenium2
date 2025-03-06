@@ -1,7 +1,4 @@
-
 import json
-import threading
-import queue
 import os
 import logging
 from time import sleep
@@ -32,17 +29,6 @@ def create_driver():
 def load_json(json_file):
     with open(json_file, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-# Функция для создания драйвера
-def create_driver():
-    options = Options()
-    options.binary_location = "/usr/bin/chromium"
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    service = Service("/usr/bin/chromedriver")
-    return webdriver.Chrome(service=service, options=options)
 
 
 # Функция входа в Umico Business
@@ -123,99 +109,82 @@ def set_discount(driver, discount_price):
 
 
 # Функция обработки одного товара
-def process_product(q):
+def process_product(product):
     driver = create_driver()
     try:
         login_to_umico(driver)
 
-        while not q.empty():
-            product = q.get()
-            product_url, edit_url = product["product_url"], product["edit_url"]
-            logging.info(f"Обрабатываем товар: {product_url}")
-            driver.get(product_url)
-            sleep(2)
-            close_ad(driver)
+        product_url, edit_url = product["product_url"], product["edit_url"]
+        logging.info(f"Обрабатываем товар: {product_url}")
+        driver.get(product_url)
+        sleep(2)
+        close_ad(driver)
 
-            try:
-                button = WebDriverWait(driver, 30).until(
-                    EC.element_to_be_clickable((By.XPATH,
-                        "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
-                    ))
-                )
-                button.click()
-            except:
-                logging.warning("Не удалось найти кнопку просмотра цен.")
-                continue
-
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
+        try:
+            button = WebDriverWait(driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH,
+                    "//a[contains(text(), 'Посмотреть цены всех продавцов') or contains(text(), 'Bütün satıcıların qiymətlərinə baxmaq')]"
+                ))
             )
+            button.click()
+        except:
+            logging.warning("Не удалось найти кнопку просмотра цен.")
+            return
 
-            product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
-            if not product_offers:
-                logging.warning("Нет предложений по этому товару.")
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "MPProductOffer"))
+        )
+
+        product_offers = driver.find_elements(By.CLASS_NAME, "MPProductOffer")
+        if not product_offers:
+            logging.warning("Нет предложений по этому товару.")
+            return
+
+        lowest_price = float('inf')
+        lowest_price_merchant = ""
+        super_store_price = None
+
+        for offer in product_offers:
+            try:
+                merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
+                price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
+                price_text_cleaned = price_text.replace("₼", "").strip()
+                if not price_text_cleaned:
+                    continue
+                price = float(price_text_cleaned)
+                if merchant == "Super Store":
+                    super_store_price = price
+                if price < lowest_price:
+                    lowest_price = price
+                    lowest_price_merchant = merchant
+            except Exception as e:
+                logging.warning(f"Ошибка при обработке предложения: {e}")
                 continue
 
-            lowest_price = float('inf')
-            lowest_price_merchant = ""
-            super_store_price = None
+        logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
+        if super_store_price is not None:
+            logging.info(f"Цена от Super Store: {super_store_price}")
 
-            for offer in product_offers:
-                try:
-                    merchant = offer.find_element(By.CLASS_NAME, "NameMerchant").text.strip()
-                    price_text = offer.find_element(By.XPATH, ".//span[@data-info='item-desc-price-old']").text.strip()
-                    price_text_cleaned = price_text.replace("₼", "").strip()
-                    if not price_text_cleaned:
-                        continue
-                    price = float(price_text_cleaned)
-                    if merchant == "Super Store":
-                        super_store_price = price
-                    if price < lowest_price:
-                        lowest_price = price
-                        lowest_price_merchant = merchant
-                except Exception as e:
-                    logging.warning(f"Ошибка при обработке предложения: {e}")
-                    continue
+        if super_store_price is not None and lowest_price < super_store_price:
+            logging.info("Меняем цену...")
+            driver.get(edit_url)
+            sleep(5)
 
-            logging.info(f"Самая низкая цена: {lowest_price} от {lowest_price_merchant}")
-            if super_store_price is not None:
-                logging.info(f"Цена от Super Store: {super_store_price}")
+            set_discount(driver, lowest_price - 0.01)
 
-            if super_store_price is not None and lowest_price < super_store_price:
-                logging.info("Меняем цену...")
-                driver.get(edit_url)
-                sleep(5)
-
-                set_discount(driver, lowest_price - 0.01)
-
-                sleep(10)
-            q.task_done()
+            sleep(10)
     except Exception as e:
         logging.exception(f"Ошибка при обработке товара: {e}")
     finally:
         driver.quit()
 
 
-# Функция для запуска потоков
+# Функция для обработки товаров из JSON
 def process_products_from_json(json_file):
     products = load_json(json_file)
-    q = queue.Queue()
 
     for product in products:
-        q.put(product)
-
-    threads = []
-    num_threads = min(1, len(products))  # Запускаем не больше 10 потоков
-
-    for _ in range(num_threads):
-        thread = threading.Thread(target=process_product, args=(q,))
-        threads.append(thread)
-        thread.start()
-
-    q.join()
-
-    for thread in threads:
-        thread.join()
+        process_product(product)
 
 
 if __name__ == "__main__":
